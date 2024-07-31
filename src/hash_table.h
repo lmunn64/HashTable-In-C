@@ -7,6 +7,7 @@ typedef struct item {
 } item_t;
 
 typedef struct hash_table {
+    int base_size;
     int size;
     int count;
     item_t** items;
@@ -29,6 +30,13 @@ int ht_hash(const char* str, int prime, int numBuckets);
 
 static int ht_get_hash(const char * s, const int num_buckets, const int attempt);
 
+static hash_table_t* ht_new_sized(const int base);
+
+static void ht_resize(hash_table_t* ht, const int base);
+
+static void ht_resize_down(hash_table_t* ht);
+
+static void ht_resize_up(hash_table_t* ht);
 // METHODS
 
 void ht_insert(hash_table_t* ht, const char* key, const char* value);
@@ -36,4 +44,5 @@ void ht_insert(hash_table_t* ht, const char* key, const char* value);
 char* ht_search(hash_table_t* t, const char* key);
 
 void ht_delete(hash_table_t* t, const char* key);
+
 #endif

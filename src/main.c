@@ -3,7 +3,9 @@
 
 int main(){
     hash_table_t* ht = ht_new();
-    ht_del_hash_table(ht);
-    int d = ht_hash("arasdfa", 53);
-    printf("%d", d);
+
+    ht_insert(ht, "Hello", "Goodbye");
+    ht_insert(ht, "Goodbye", "Hello");
+
+    printf("%s", ht_search(ht, "Hello"));
 }

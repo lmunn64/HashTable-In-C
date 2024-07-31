@@ -2,20 +2,63 @@
 #include <string.h>
 
 #include "hash_table.h"
+#include "prime.h"
 
+#define INITIAL_BASE_SIZE 20
 #define PRIME1 151
 #define PRIME2 163
 
 static item_t TOMBSTONE = {NULL, NULL};
 
-hash_table_t* ht_new(){
+hash_table_t* ht_new_sized(const int base){
 
     hash_table_t* ht = malloc(sizeof(hash_table_t));
-    ht->size = 55;
+    ht->base_size = base;
+    ht->size = next_prime(base);
     ht->count = 0;
     ht->items = calloc((size_t)ht->size, sizeof(item_t*));
     return ht;
 }
+
+hash_table_t* ht_new(){
+    return ht_new_sized(INITIAL_BASE_SIZE);
+}
+
+static void ht_resize(hash_table_t* ht, const int base){
+    if(base < INITIAL_BASE_SIZE){
+        return;
+    }
+    hash_table_t* new_ht = ht_new_sized(base);
+    for(int i = 0; i < ht->size; i++){
+        item_t* item = ht->items[i];
+        if(item && item != &TOMBSTONE){
+            ht_insert(new_ht, item->key, item->value);
+        }
+    }
+
+    ht->base_size = new_ht->base_size;
+    ht->count = new_ht->count;
+
+    const int tmp_size = ht->size;
+    ht->size = new_ht->size;
+    new_ht->size = tmp_size;
+
+    item_t** tmp_items = ht->items;
+    ht->items = new_ht->items;
+    new_ht->items = tmp_items;
+
+    ht_del_hash_table(new_ht);
+}
+
+static void ht_resize_up(hash_table_t* ht){
+    const int new_size = ht->base_size * 2;
+    ht_resize(ht, new_size); 
+}
+static void ht_resize_down(hash_table_t* ht){
+    const int new_size = ht->base_size / 2;
+    ht_resize(ht, new_size); 
+}
+
 static void ht_del_item(item_t* i){
     free(i->key);
     free(i->value);
@@ -56,7 +99,13 @@ static int ht_get_hash(const char* s, const int num_buckets, const int attempt){
     return (hash_a + (attempt *(hash_b + 1))) % num_buckets;
 }
 
+
 void ht_insert(hash_table_t* ht, const char* key, const char* value){
+    //Check if resizing needed
+    const int load = ht->count * 100 / ht->size;
+    if (load < 10){
+        ht_resize_down(ht);
+    }
     item_t* item = ht_new_item(key, value);
     int index = ht_get_hash(item->key, ht->size, 0);
     item_t* curr_item = ht->items[index];
@@ -97,6 +146,12 @@ char* ht_search(hash_table_t* ht, const char* key){
 }
 
 void ht_delete(hash_table_t* ht, const char* key){
+    //Check if resizing needed
+    const int load = ht->count * 100 / ht->size;
+    if (load > 70){
+        ht_resize_up(ht);
+    }
+
     int index = ht_get_hash(key, ht->count, 0);
     item_t* item = ht->items[index];
     int i = 1;
