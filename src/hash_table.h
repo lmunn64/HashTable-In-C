@@ -27,4 +27,13 @@ static item_t* ht_new_item(const char* k, const char* v);
 //Modified djb2 hashing algorithm
 int ht_hash(const char* str, int prime, int numBuckets);
 
+static int ht_get_hash(const char * s, const int num_buckets, const int attempt);
+
+// METHODS
+
+void ht_insert(hash_table_t* ht, const char* key, const char* value);
+
+char* ht_search(hash_table_t* t, const char* key);
+
+void ht_delete(hash_table_t* t, const char* key);
 #endif
